@@ -3,9 +3,9 @@ const path = require("path");
 const { nanoid } = require("nanoid");
 
 const contactsPath = path.join(__dirname, "db", "contacts.json");
-console.log(contactsPath)
+const updateContacts = async (contacts) =>
+  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
-// TODO: задокументировать каждую функцию
 async function listContacts() {
   const data = await fs.readFile(contactsPath);
 
@@ -13,29 +13,49 @@ async function listContacts() {
 }
 
 async function getContactById(contactId) {
-  const contacts = await listContacts();
-  const resault = contacts.find(item => item.id === `${contactId}`);
+  try {
+    const contacts = await listContacts();
+    const resault = contacts.find((item) => item.id === `${contactId}`);
 
-  return resault || null;
+    return resault || null;
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
 async function removeContact(contactId) {
-  // ...твой код
+  try {
+    const contacts = await listContacts();
+    const index = contacts.findIndex((item) => item.id === `${contactId}`);
+    if (index === -1) {
+      return null;
+    }
+    const [resault] = contacts.splice(index, 1);
+    await updateContacts(contacts);
+
+    return resault;
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
 async function addContact(name, email, phone) {
-  const contacts = await listContacts();
-  const newContact = {
-    id: nanoid(),
-    name,
-    email,
-    phone,
+  try {
+    const contacts = await listContacts();
+    const newContact = {
+      id: nanoid(),
+      name,
+      email,
+      phone,
+    };
+
+    contacts.push(newContact);
+    await updateContacts(contacts);
+
+    return newContact;
+  } catch (err) {
+    console.error("Error:", err);
   }
-
-  contacts.push(newContact);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-
-  return newContact;
 }
 
 module.exports = {
@@ -43,4 +63,4 @@ module.exports = {
   getContactById,
   removeContact,
   addContact,
-}
+};
